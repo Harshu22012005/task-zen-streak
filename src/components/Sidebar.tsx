@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Home, Target, Zap, Settings, Calendar, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { UpgradeCard } from "@/components/UpgradeCard";
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -64,20 +65,8 @@ export const Sidebar = () => {
           Sign Out
         </Button>
 
-        <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl border border-purple-100 dark:border-purple-800">
-          <div className="text-center">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Zap className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Upgrade to Pro</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Unlock advanced features and themes
-            </p>
-            <Button size="sm" className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg">
-              Upgrade Now
-            </Button>
-          </div>
-        </div>
+        {/* Replace the old upgrade card with the new premium upgrade */}
+        <UpgradeCard />
       </div>
     </aside>
   );
