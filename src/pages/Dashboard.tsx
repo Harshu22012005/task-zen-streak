@@ -6,6 +6,7 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { AddTaskForm } from "@/components/AddTaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { TaskList } from "@/components/TaskList";
+import { WeekSchedule } from "@/components/WeekSchedule";
 import { useTasks } from "@/hooks/useTasks";
 import { useUserStats } from "@/hooks/useUserStats";
 
@@ -49,6 +50,11 @@ const Dashboard = () => {
         <main className="flex-1 p-4 lg:p-8">
           <div className="max-w-4xl mx-auto">
             <DashboardHeader incompleteTasks={incompleteCount} />
+            
+            {/* Week Schedule Section */}
+            <div className="mb-8">
+              <WeekSchedule tasks={tasks} />
+            </div>
             
             <AddTaskForm 
               onAddTask={handleAddTask}
