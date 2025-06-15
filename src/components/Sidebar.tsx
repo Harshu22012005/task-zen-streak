@@ -1,10 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { Home, Target, Zap, Settings, Calendar } from "lucide-react";
+import { Home, Target, Zap, Settings, Calendar, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Sidebar = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
   
   const menuItems = [
     { icon: Home, label: 'Overview', path: '/dashboard' },
@@ -13,6 +15,10 @@ export const Sidebar = () => {
     { icon: Calendar, label: 'Streaks', path: '/streaks' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 p-6 hidden lg:block">
@@ -25,7 +31,7 @@ export const Sidebar = () => {
         </div>
       </div>
 
-      <nav className="space-y-2">
+      <nav className="space-y-2 mb-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -48,18 +54,29 @@ export const Sidebar = () => {
         })}
       </nav>
 
-      <div className="mt-12 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Zap className="w-6 h-6 text-purple-600" />
+      <div className="mt-auto space-y-4">
+        <Button
+          onClick={handleSignOut}
+          variant="ghost"
+          className="w-full justify-start text-left px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          Sign Out
+        </Button>
+
+        <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Zap className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-1">Upgrade to Pro</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Unlock advanced features and themes
+            </p>
+            <Button size="sm" className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg">
+              Upgrade Now
+            </Button>
           </div>
-          <h3 className="font-semibold text-gray-800 mb-1">Upgrade to Pro</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            Unlock advanced features and themes
-          </p>
-          <Button size="sm" className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-lg">
-            Upgrade Now
-          </Button>
         </div>
       </div>
     </aside>

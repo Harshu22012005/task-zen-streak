@@ -1,97 +1,32 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sidebar } from "@/components/Sidebar";
 import { TaskItem } from "@/components/TaskItem";
 import { StatsWidget } from "@/components/StatsWidget";
-import { Plus, Filter } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority: 'low' | 'medium' | 'high';
-  dueTime?: string;
-  createdAt: Date;
-}
+import { Plus } from "lucide-react";
+import { useTasks } from "@/hooks/useTasks";
+import { useUserStats } from "@/hooks/useUserStats";
 
 const Dashboard = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Complete math assignment',
-      completed: true,
-      priority: 'high',
-      dueTime: '2:00 PM',
-      createdAt: new Date(),
-    },
-    {
-      id: '2',
-      title: 'Review presentation slides',
-      completed: false,
-      priority: 'medium',
-      dueTime: '2:00 PM',
-      createdAt: new Date(),
-    },
-    {
-      id: '3',
-      title: 'Call study group',
-      completed: false,
-      priority: 'low',
-      createdAt: new Date(),
-    },
-  ]);
-  
+  const { tasks, addTask, toggleTask, deleteTask, isLoading, isAddingTask } = useTasks();
+  const { stats } = useUserStats();
   const [newTask, setNewTask] = useState('');
   const [filter, setFilter] = useState<'all' | 'today' | 'completed'>('all');
-  const [streak, setStreak] = useState(5);
-  const [points, setPoints] = useState(247);
-  const { toast } = useToast();
 
-  const addTask = () => {
+  const handleAddTask = () => {
     if (!newTask.trim()) return;
     
-    const task: Task = {
-      id: Date.now().toString(),
-      title: newTask,
-      completed: false,
-      priority: 'medium',
-      createdAt: new Date(),
-    };
-    
-    setTasks([task, ...tasks]);
+    addTask({ title: newTask });
     setNewTask('');
-    toast({
-      title: "Task added!",
-      description: "Your new task has been added to the list.",
-    });
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id === id) {
-        const updatedTask = { ...task, completed: !task.completed };
-        if (updatedTask.completed) {
-          setPoints(prev => prev + 10);
-          toast({
-            title: "Task completed! 🎉",
-            description: "+10 points earned!",
-          });
-        }
-        return updatedTask;
-      }
-      return task;
-    }));
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
-    toast({
-      title: "Task deleted",
-      description: "Task has been removed from your list.",
-    });
+  const handleToggleTask = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      toggleTask({ id, completed: !task.completed });
+    }
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -107,6 +42,17 @@ const Dashboard = () => {
 
   const completedCount = tasks.filter(task => task.completed).length;
   const totalCount = tasks.length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-sky-500 rounded-lg animate-pulse mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -133,11 +79,12 @@ const Dashboard = () => {
                   placeholder="What needs to be done today?"
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addTask()}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
                   className="flex-1 border-gray-200 focus:border-sky-400 focus:ring-sky-400"
                 />
                 <Button 
-                  onClick={addTask}
+                  onClick={handleAddTask}
+                  disabled={isAddingTask}
                   className="bg-sky-500 hover:bg-sky-600 text-white px-6 rounded-xl"
                 >
                   <Plus className="w-5 h-5" />
@@ -176,7 +123,7 @@ const Dashboard = () => {
                 <TaskItem
                   key={task.id}
                   task={task}
-                  onToggle={toggleTask}
+                  onToggle={handleToggleTask}
                   onDelete={deleteTask}
                 />
               ))}
@@ -200,7 +147,11 @@ const Dashboard = () => {
 
         {/* Right Sidebar - Stats */}
         <aside className="w-full lg:w-80 p-4 lg:p-8">
-          <StatsWidget streak={streak} points={points} completedTasks={completedCount} />
+          <StatsWidget 
+            streak={stats.current_streak} 
+            points={stats.points} 
+            completedTasks={completedCount} 
+          />
         </aside>
       </div>
     </div>
