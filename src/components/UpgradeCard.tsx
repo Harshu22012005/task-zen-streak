@@ -11,7 +11,7 @@ export const UpgradeCard = () => {
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const { user } = useAuth();
 
-  const upiId = "dailytasker@paytm"; // Replace with your actual UPI ID
+  const upiId = "9067572205@axl"; // Updated UPI ID
   const amount = "9";
   
   const paymentMethods = [
