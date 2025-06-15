@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
+import { NavigationHeader } from "@/components/NavigationHeader";
 import { StatsWidget } from "@/components/StatsWidget";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { AddTaskForm } from "@/components/AddTaskForm";
@@ -42,50 +43,56 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      {/* Mobile Navigation Header */}
+      <NavigationHeader />
       
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="max-w-4xl mx-auto">
-            <DashboardHeader incompleteTasks={incompleteCount} />
-            
-            {/* Week Schedule Section */}
-            <div className="mb-8">
-              <WeekSchedule tasks={tasks} />
+      <div className="flex flex-1">
+        {/* Desktop Sidebar */}
+        <Sidebar />
+        
+        <div className="flex-1 flex flex-col lg:flex-row">
+          {/* Main Content */}
+          <main className="flex-1 p-4 lg:p-8">
+            <div className="max-w-4xl mx-auto">
+              <DashboardHeader incompleteTasks={incompleteCount} />
+              
+              {/* Week Schedule Section */}
+              <div className="mb-8">
+                <WeekSchedule tasks={tasks} />
+              </div>
+              
+              <AddTaskForm 
+                onAddTask={handleAddTask}
+                isAddingTask={isAddingTask}
+              />
+
+              <TaskFilters
+                filter={filter}
+                onFilterChange={setFilter}
+                totalCount={totalCount}
+                incompleteCount={incompleteCount}
+                completedCount={completedCount}
+              />
+
+              <TaskList
+                tasks={tasks}
+                filter={filter}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={deleteTask}
+              />
             </div>
-            
-            <AddTaskForm 
-              onAddTask={handleAddTask}
-              isAddingTask={isAddingTask}
-            />
+          </main>
 
-            <TaskFilters
-              filter={filter}
-              onFilterChange={setFilter}
-              totalCount={totalCount}
-              incompleteCount={incompleteCount}
-              completedCount={completedCount}
+          {/* Right Sidebar - Stats */}
+          <aside className="w-full lg:w-80 p-4 lg:p-8">
+            <StatsWidget 
+              streak={stats.current_streak} 
+              points={stats.points} 
+              completedTasks={completedCount} 
             />
-
-            <TaskList
-              tasks={tasks}
-              filter={filter}
-              onToggleTask={handleToggleTask}
-              onDeleteTask={deleteTask}
-            />
-          </div>
-        </main>
-
-        {/* Right Sidebar - Stats */}
-        <aside className="w-full lg:w-80 p-4 lg:p-8">
-          <StatsWidget 
-            streak={stats.current_streak} 
-            points={stats.points} 
-            completedTasks={completedCount} 
-          />
-        </aside>
+          </aside>
+        </div>
       </div>
     </div>
   );
