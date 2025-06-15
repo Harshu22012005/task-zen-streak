@@ -15,6 +15,28 @@ export interface Task {
   user_id: string;
 }
 
+const sendTaskNotification = async (userEmail: string, taskTitle: string, action: 'created' | 'completed') => {
+  try {
+    const response = await fetch('/api/send-task-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userEmail,
+        taskTitle,
+        action,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send notification');
+    }
+  } catch (error) {
+    console.error('Error sending task notification:', error);
+  }
+};
+
 export const useTasks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -46,6 +68,26 @@ export const useTasks = () => {
     enabled: !!user,
   });
 
+  const { data: emailPreferences } = useQuery({
+    queryKey: ['email_preferences', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('email_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const addTaskMutation = useMutation({
     mutationFn: async (taskData: { title: string; priority?: 'low' | 'medium' | 'high'; dueTime?: string }) => {
       if (!user) throw new Error('User not authenticated');
@@ -64,12 +106,17 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       toast({
         title: "Task added!",
         description: "Your new task has been added to the list.",
       });
+
+      // Send email notification if enabled
+      if (emailPreferences?.email_updates && user?.email) {
+        sendTaskNotification(user.email, data.title, 'created');
+      }
     },
     onError: (error) => {
       toast({
@@ -98,7 +145,7 @@ export const useTasks = () => {
 
       return data;
     },
-    onSuccess: (_, { completed }) => {
+    onSuccess: (data, { completed }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user_stats', user?.id] });
       
@@ -107,6 +154,11 @@ export const useTasks = () => {
           title: "Task completed! 🎉",
           description: "+10 points earned!",
         });
+
+        // Send email notification if enabled
+        if (emailPreferences?.email_updates && user?.email) {
+          sendTaskNotification(user.email, data.title, 'completed');
+        }
       }
     },
     onError: () => {
