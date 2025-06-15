@@ -1,121 +1,98 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Quote, Heart } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Quote } from "lucide-react";
 
-interface QuoteData {
-  text: string;
-  author: string;
-}
+const MotivationalQuotes = () => {
+  const [quote, setQuote] = useState("");
+  const [author, setAuthor] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-export const MotivationalQuotes = () => {
-  const [quote, setQuote] = useState<QuoteData>({ text: '', author: '' });
-  const [isLoading, setIsLoading] = useState(false);
+  const fallbackQuotes = [
+    { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+    { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" },
+    { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+    { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+    { text: "Don't be afraid to give up the good to go for the great.", author: "John D. Rockefeller" },
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "Life is what happens to you while you're busy making other plans.", author: "John Lennon" },
+    { text: "The future belongs to those who prepare for it today.", author: "Malcolm X" },
+    { text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle" }
+  ];
 
-  const fetchQuote = async () => {
-    setIsLoading(true);
-    try {
-      // Using a different quotes API that's more reliable
-      const response = await fetch('https://api.quotable.io/quotes/random?minLength=50&maxLength=150&tags=motivational|success|inspirational', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Quote API response:', data);
-      
-      if (data && data.length > 0) {
-        setQuote({
-          text: data[0].content,
-          author: data[0].author
-        });
-      } else {
-        throw new Error('No quotes returned from API');
-      }
-    } catch (error) {
-      console.error('Error fetching quote:', error);
-      // Enhanced fallback quotes
-      const fallbackQuotes = [
-        { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
-        { text: "Don't let yesterday take up too much of today.", author: "Will Rogers" },
-        { text: "You learn more from failure than from success. Don't let it stop you. Failure builds character.", author: "Unknown" },
-        { text: "It's not whether you get knocked down, it's whether you get up.", author: "Vince Lombardi" },
-        { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-        { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
-        { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" }
-      ];
-      const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
-      setQuote(randomQuote);
-      toast.error('Using offline quote - API temporarily unavailable');
-    } finally {
-      setIsLoading(false);
-    }
+  const getRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
+    return fallbackQuotes[randomIndex];
   };
 
-  // Fetch initial quote on component mount
   useEffect(() => {
+    const fetchQuote = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Try to fetch from API
+        const response = await fetch('https://api.quotable.io/random?minLength=50&maxLength=150&tags=motivational|inspirational|success');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setQuote(data.content);
+          setAuthor(data.author);
+        } else {
+          throw new Error('API failed');
+        }
+      } catch (error) {
+        console.log('Using fallback quote due to API error:', error);
+        // Use fallback quote
+        const randomQuote = getRandomQuote();
+        setQuote(randomQuote.text);
+        setAuthor(randomQuote.author);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchQuote();
+    
+    // Refresh quote every 30 seconds
+    const interval = setInterval(fetchQuote, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-3">
+            <Quote className="w-6 h-6 text-purple-500 animate-pulse" />
+            <div className="flex-1">
+              <div className="h-4 bg-gray-300 rounded animate-pulse mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-700 animate-fade-in hover:scale-105 transition-all duration-300">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center space-x-3 text-lg">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center animate-pulse">
-            <Quote className="w-4 h-4 text-white" />
+    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800 hover:shadow-lg transition-all duration-300 hover:scale-105">
+      <CardContent className="p-6">
+        <div className="flex items-start space-x-3">
+          <Quote className="w-6 h-6 text-purple-500 flex-shrink-0 mt-1" />
+          <div className="flex-1">
+            <p className="text-gray-700 dark:text-gray-300 font-medium leading-relaxed mb-3">
+              {quote}
+            </p>
+            <p className="text-purple-600 dark:text-purple-400 font-semibold text-sm">
+              — {author}
+            </p>
           </div>
-          <div>
-            <div className="text-gray-800 dark:text-gray-200">Daily Motivation</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 font-normal">
-              Inspire your day
-            </div>
-          </div>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {quote.text ? (
-          <div className="space-y-3 animate-fade-in">
-            <blockquote className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-              "{quote.text}"
-            </blockquote>
-            <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
-              — {quote.author}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2 ml-auto"></div>
-          </div>
-        )}
-
-        <Button
-          onClick={fetchQuote}
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium py-2 rounded-lg transition-all duration-200 disabled:opacity-50 hover:scale-105"
-        >
-          {isLoading ? (
-            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Heart className="w-4 h-4 mr-2" />
-          )}
-          {isLoading ? 'Loading...' : 'New Quote'}
-        </Button>
-
-        <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <span>Powered by Quotable API</span>
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export default MotivationalQuotes;

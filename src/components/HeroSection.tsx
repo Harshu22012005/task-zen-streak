@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Target, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Target, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import AnimatedBackground from "./AnimatedBackground";
@@ -49,18 +49,13 @@ const HeroSection = ({ scrollY, isVisible }: HeroSectionProps) => {
         </div>
         
         <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <div className="flex justify-center mb-8">
             <Link to={user ? "/dashboard" : "/auth"}>
               <Button size="lg" className="group bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-xl px-8 py-4 text-lg font-semibold shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-110 animate-pulse">
                 {user ? "Enter Dashboard" : "Start Free Today"}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            
-            <Button size="lg" variant="outline" className="group border-purple-500/50 text-purple-300 hover:bg-purple-500/20 rounded-xl px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105">
-              <Sparkles className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
-              Watch Demo
-            </Button>
           </div>
         </div>
 
@@ -75,7 +70,7 @@ const HeroSection = ({ scrollY, isVisible }: HeroSectionProps) => {
               <span>Goal Focused</span>
             </div>
             <div className="flex items-center space-x-2 hover:text-blue-400 transition-colors duration-300 cursor-pointer group">
-              <Sparkles className="w-5 h-5 group-hover:animate-bounce" />
+              <Target className="w-5 h-5 group-hover:animate-bounce" />
               <span>AI Enhanced</span>
             </div>
           </div>
