@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +90,7 @@ export const UpgradeCard = () => {
         is_premium: true,
         premium_activated_at: new Date().toISOString(),
         payment_transaction_id: txnId
-      })
+      } as any)
       .eq('user_id', user?.id);
 
     if (error) throw error;

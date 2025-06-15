@@ -77,9 +77,12 @@ export type Database = {
           created_at: string
           current_streak: number
           id: string
+          is_premium: boolean
           last_activity_date: string | null
           longest_streak: number
+          payment_transaction_id: string | null
           points: number
+          premium_activated_at: string | null
           updated_at: string
           user_id: string
         }
@@ -87,9 +90,12 @@ export type Database = {
           created_at?: string
           current_streak?: number
           id?: string
+          is_premium?: boolean
           last_activity_date?: string | null
           longest_streak?: number
+          payment_transaction_id?: string | null
           points?: number
+          premium_activated_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -97,9 +103,12 @@ export type Database = {
           created_at?: string
           current_streak?: number
           id?: string
+          is_premium?: boolean
           last_activity_date?: string | null
           longest_streak?: number
+          payment_transaction_id?: string | null
           points?: number
+          premium_activated_at?: string | null
           updated_at?: string
           user_id?: string
         }
