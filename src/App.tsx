@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import FocusMode from "./pages/FocusMode";
 import Streaks from "./pages/Streaks";
 import Settings from "./pages/Settings";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
                   <Settings />
                 </ProtectedRoute>
               } />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

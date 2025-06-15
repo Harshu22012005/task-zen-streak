@@ -2,40 +2,58 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Palette, Brain, Zap, Crown, Check } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Sparkles, Palette, Brain, Zap, Crown, Check, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 export const UpgradeCard = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const { user } = useAuth();
 
-  const handleUpgrade = async () => {
-    if (!user) {
-      toast.error('Please login to upgrade');
-      return;
+  const upiId = "dailytasker@paytm"; // Replace with your actual UPI ID
+  const amount = "9";
+  
+  const paymentMethods = [
+    {
+      id: 'paytm',
+      name: 'Paytm',
+      logo: '📱',
+      color: 'bg-blue-500',
+      url: `paytmmp://pay?pa=${upiId}&pn=DailyTasker&am=${amount}&cu=INR&tn=Premium Upgrade`
+    },
+    {
+      id: 'googlepay',
+      name: 'Google Pay',
+      logo: '🌟',
+      color: 'bg-green-500',
+      url: `tez://upi/pay?pa=${upiId}&pn=DailyTasker&am=${amount}&cu=INR&tn=Premium Upgrade`
+    },
+    {
+      id: 'phonepe',
+      name: 'PhonePe',
+      logo: '💜',
+      color: 'bg-purple-600',
+      url: `phonepe://pay?pa=${upiId}&pn=DailyTasker&am=${amount}&cu=INR&tn=Premium Upgrade`
     }
+  ];
 
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-upgrade-checkout');
-      
-      if (error) throw error;
-      
-      if (data.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
-        toast.success('Redirecting to payment...');
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-      toast.error('Failed to start upgrade process. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
+  const handlePaymentSelect = (method: typeof paymentMethods[0]) => {
+    setSelectedPayment(method.id);
+    
+    // Try to open the app-specific payment URL
+    const link = document.createElement('a');
+    link.href = method.url;
+    link.click();
+    
+    // Show payment details as fallback
+    setShowPaymentDetails(true);
+    toast.success(`Opening ${method.name}...`);
+  };
+
+  const copyUpiId = () => {
+    navigator.clipboard.writeText(upiId);
+    toast.success('UPI ID copied to clipboard!');
   };
 
   const features = [
@@ -98,24 +116,65 @@ export const UpgradeCard = () => {
           ))}
         </div>
 
-        {/* Upgrade Button */}
-        <Button 
-          onClick={handleUpgrade}
-          disabled={isProcessing || !user}
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl py-3 text-lg font-semibold shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
-        >
-          {isProcessing ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-5 h-5 mr-2" />
-              Upgrade Now - ₹9 Only
-            </>
-          )}
-        </Button>
+        {!showPaymentDetails ? (
+          /* Payment Method Selection */
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              Choose Payment Method:
+            </div>
+            {paymentMethods.map((method) => (
+              <Button
+                key={method.id}
+                onClick={() => handlePaymentSelect(method)}
+                className={`w-full justify-start text-left p-4 rounded-xl text-white font-semibold hover:scale-105 transition-all duration-300 ${method.color}`}
+              >
+                <span className="text-2xl mr-3">{method.logo}</span>
+                <span>Pay with {method.name}</span>
+                <ExternalLink className="w-4 h-4 ml-auto" />
+              </Button>
+            ))}
+          </div>
+        ) : (
+          /* Payment Details */
+          <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Complete Payment
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Pay ₹9 to the UPI ID below
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border">
+              <div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">UPI ID</div>
+                <div className="font-mono font-semibold text-gray-800 dark:text-gray-200">{upiId}</div>
+              </div>
+              <Button
+                onClick={copyUpiId}
+                variant="outline"
+                size="sm"
+                className="ml-2"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                After payment, send screenshot to activate premium features
+              </div>
+              <Button
+                onClick={() => setShowPaymentDetails(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Try Different Payment Method
+              </Button>
+            </div>
+          </div>
+        )}
 
         {!user && (
           <div className="text-center text-sm text-gray-500 dark:text-gray-400">
@@ -126,7 +185,7 @@ export const UpgradeCard = () => {
         {/* Security Badge */}
         <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span>Secure payment powered by Stripe</span>
+          <span>Secure UPI payment</span>
         </div>
       </CardContent>
     </Card>
