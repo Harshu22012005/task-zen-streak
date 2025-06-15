@@ -8,7 +8,7 @@ import { AddTaskForm } from "@/components/AddTaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { TaskList } from "@/components/TaskList";
 import { WeekSchedule } from "@/components/WeekSchedule";
-import { UpgradeCard } from "@/components/UpgradeCard";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { useTasks } from "@/hooks/useTasks";
 import { useUserStats } from "@/hooks/useUserStats";
 
@@ -58,9 +58,9 @@ const Dashboard = () => {
             <div className="max-w-4xl mx-auto">
               <DashboardHeader incompleteTasks={incompleteCount} />
               
-              {/* Mobile Upgrade Card - Show only on mobile */}
+              {/* Mobile Motivational Quotes - Show only on mobile */}
               <div className="lg:hidden mb-6">
-                <UpgradeCard />
+                <MotivationalQuotes />
               </div>
               
               {/* Week Schedule Section */}

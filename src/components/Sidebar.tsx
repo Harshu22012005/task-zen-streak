@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Home, Target, Zap, Settings, Calendar, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { UpgradeCard } from "@/components/UpgradeCard";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -65,8 +65,8 @@ export const Sidebar = () => {
           Sign Out
         </Button>
 
-        {/* Replace the old upgrade card with the new premium upgrade */}
-        <UpgradeCard />
+        {/* Replace the upgrade card with motivational quotes */}
+        <MotivationalQuotes />
       </div>
     </aside>
   );
