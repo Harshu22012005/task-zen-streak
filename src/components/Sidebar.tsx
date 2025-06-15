@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Home, Target, Zap, Settings, Calendar, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { MotivationalQuotes } from "@/components/MotivationalQuotes";
+import MotivationalQuotes from "@/components/MotivationalQuotes";
 
 export const Sidebar = () => {
   const location = useLocation();

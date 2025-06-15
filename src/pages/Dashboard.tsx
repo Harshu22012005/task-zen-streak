@@ -8,7 +8,7 @@ import { AddTaskForm } from "@/components/AddTaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { TaskList } from "@/components/TaskList";
 import { WeekSchedule } from "@/components/WeekSchedule";
-import { MotivationalQuotes } from "@/components/MotivationalQuotes";
+import MotivationalQuotes from "@/components/MotivationalQuotes";
 import { useTasks } from "@/hooks/useTasks";
 import { useUserStats } from "@/hooks/useUserStats";
 

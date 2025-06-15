@@ -1,7 +1,7 @@
 
 import { Sidebar } from "@/components/Sidebar";
 import { NavigationHeader } from "@/components/NavigationHeader";
-import { AppThumbnailGenerator } from "@/components/AppThumbnailGenerator";
+import AppThumbnailGenerator from "@/components/AppThumbnailGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Palette, Smartphone } from "lucide-react";
 
