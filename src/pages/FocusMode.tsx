@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
-import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Play, Pause, RotateCcw } from "lucide-react";
-import { NavigationHeader } from "@/components/NavigationHeader";
+import { Play, Pause, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 
 const FocusMode = () => {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [sessionType, setSessionType] = useState<'work' | 'break'>('work');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [oscillator, setOscillator] = useState<OscillatorNode | null>(null);
+  const [gainNode, setGainNode] = useState<GainNode | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -52,93 +55,249 @@ const FocusMode = () => {
     setTimeLeft(minutes * 60);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <NavigationHeader />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Focus Mode 🎯
-              </h1>
-              <p className="text-gray-600">
-                Use the Pomodoro technique to boost your productivity
-              </p>
+  const enterFullscreen = () => {
+    setIsFullscreen(true);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    }
+  };
+
+  const exitFullscreen = () => {
+    setIsFullscreen(false);
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  };
+
+  const toggleMusic = () => {
+    if (!isMusicPlaying) {
+      startMeditationMusic();
+    } else {
+      stopMeditationMusic();
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
+
+  const startMeditationMusic = () => {
+    try {
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator1 = context.createOscillator();
+      const oscillator2 = context.createOscillator();
+      const gain = context.createGain();
+
+      // Create ambient meditation sounds
+      oscillator1.frequency.setValueAtTime(110, context.currentTime); // Low frequency
+      oscillator2.frequency.setValueAtTime(220, context.currentTime); // Higher harmonic
+      
+      oscillator1.type = 'sine';
+      oscillator2.type = 'triangle';
+      
+      gain.gain.setValueAtTime(0.1, context.currentTime);
+      
+      oscillator1.connect(gain);
+      oscillator2.connect(gain);
+      gain.connect(context.destination);
+      
+      oscillator1.start();
+      oscillator2.start();
+      
+      setAudioContext(context);
+      setOscillator(oscillator1);
+      setGainNode(gain);
+    } catch (error) {
+      console.log('Audio not supported');
+    }
+  };
+
+  const stopMeditationMusic = () => {
+    if (oscillator && audioContext) {
+      oscillator.stop();
+      audioContext.close();
+      setOscillator(null);
+      setAudioContext(null);
+      setGainNode(null);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopMeditationMusic();
+    };
+  }, []);
+
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center text-white z-50">
+        <Button
+          onClick={exitFullscreen}
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 text-white hover:bg-white/20"
+        >
+          <X className="w-6 h-6" />
+        </Button>
+
+        <div className="text-center space-y-8">
+          <div className="space-y-4">
+            <div className="text-lg font-medium opacity-80">
+              {sessionType === 'work' ? 'Focus Session' : 'Break Time'}
             </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-              <div className="mb-6">
-                <div className="text-sm font-medium text-gray-600 mb-2">
-                  {sessionType === 'work' ? 'Work Session' : 'Break Time'}
-                </div>
-                <div className="text-6xl font-bold text-sky-600 mb-4">
-                  {formatTime(timeLeft)}
-                </div>
-                
-                <div className="flex justify-center gap-4 mb-6">
-                  <Button
-                    onClick={handleStart}
-                    className="bg-sky-500 hover:bg-sky-600 text-white px-8 py-3 rounded-xl"
-                  >
-                    {isRunning ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
-                    {isRunning ? 'Pause' : 'Start'}
-                  </Button>
-                  
-                  <Button
-                    onClick={handleReset}
-                    variant="outline"
-                    className="px-8 py-3 rounded-xl"
-                  >
-                    <RotateCcw className="w-5 h-5 mr-2" />
-                    Reset
-                  </Button>
-                </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Start</h3>
-                <div className="flex justify-center gap-3">
-                  <Button
-                    onClick={() => handleCustomTime(15)}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg"
-                  >
-                    15 min
-                  </Button>
-                  <Button
-                    onClick={() => handleCustomTime(25)}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg"
-                  >
-                    25 min
-                  </Button>
-                  <Button
-                    onClick={() => handleCustomTime(45)}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg"
-                  >
-                    45 min
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">How it works</h3>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>• Work for 25 minutes with full focus</p>
-                <p>• Take a 5-minute break</p>
-                <p>• Repeat the cycle to maximize productivity</p>
-                <p>• After 4 cycles, take a longer 15-30 minute break</p>
-              </div>
+            <div className="text-8xl md:text-9xl font-bold tracking-wider">
+              {formatTime(timeLeft)}
             </div>
           </div>
-        </main>
+
+          <div className="flex justify-center gap-6">
+            <Button
+              onClick={handleStart}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 px-8 py-4 text-lg backdrop-blur-sm"
+              variant="outline"
+            >
+              {isRunning ? <Pause className="w-6 h-6 mr-3" /> : <Play className="w-6 h-6 mr-3" />}
+              {isRunning ? 'Pause' : 'Start'}
+            </Button>
+            
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 px-8 py-4 text-lg backdrop-blur-sm"
+            >
+              <RotateCcw className="w-6 h-6 mr-3" />
+              Reset
+            </Button>
+
+            <Button
+              onClick={toggleMusic}
+              variant="outline"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 px-8 py-4 text-lg backdrop-blur-sm"
+            >
+              {isMusicPlaying ? <VolumeX className="w-6 h-6 mr-3" /> : <Volume2 className="w-6 h-6 mr-3" />}
+              {isMusicPlaying ? 'Stop Music' : 'Play Music'}
+            </Button>
+          </div>
+
+          <div className="text-center space-y-3 opacity-70">
+            <p className="text-lg">Quick Start:</p>
+            <div className="flex justify-center gap-3">
+              <Button
+                onClick={() => handleCustomTime(15)}
+                variant="ghost"
+                className="text-white hover:bg-white/20 border border-white/30"
+              >
+                15 min
+              </Button>
+              <Button
+                onClick={() => handleCustomTime(25)}
+                variant="ghost"
+                className="text-white hover:bg-white/20 border border-white/30"
+              >
+                25 min
+              </Button>
+              <Button
+                onClick={() => handleCustomTime(45)}
+                variant="ghost"
+                className="text-white hover:bg-white/20 border border-white/30"
+              >
+                45 min
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="max-w-2xl mx-auto w-full">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+            Focus Mode 🎯
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Use the Pomodoro technique to boost your productivity
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div className="mb-6">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              {sessionType === 'work' ? 'Work Session' : 'Break Time'}
+            </div>
+            <div className="text-6xl font-bold text-sky-600 mb-4">
+              {formatTime(timeLeft)}
+            </div>
+            
+            <div className="flex justify-center gap-4 mb-6">
+              <Button
+                onClick={handleStart}
+                className="bg-sky-500 hover:bg-sky-600 text-white px-8 py-3 rounded-xl"
+              >
+                {isRunning ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+                {isRunning ? 'Pause' : 'Start'}
+              </Button>
+              
+              <Button
+                onClick={handleReset}
+                variant="outline"
+                className="px-8 py-3 rounded-xl"
+              >
+                <RotateCcw className="w-5 h-5 mr-2" />
+                Reset
+              </Button>
+
+              <Button
+                onClick={enterFullscreen}
+                variant="outline"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white border-none hover:from-purple-600 hover:to-pink-600"
+              >
+                Enter Focus Mode
+              </Button>
+            </div>
+          </div>
+
+          <div className="border-t dark:border-gray-700 pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Quick Start</h3>
+            <div className="flex justify-center gap-3">
+              <Button
+                onClick={() => handleCustomTime(15)}
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+              >
+                15 min
+              </Button>
+              <Button
+                onClick={() => handleCustomTime(25)}
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+              >
+                25 min
+              </Button>
+              <Button
+                onClick={() => handleCustomTime(45)}
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+              >
+                45 min
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">How it works</h3>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <p>• Work for 25 minutes with full focus</p>
+            <p>• Take a 5-minute break</p>
+            <p>• Repeat the cycle to maximize productivity</p>
+            <p>• After 4 cycles, take a longer 15-30 minute break</p>
+            <p>• Use fullscreen mode for distraction-free focus</p>
+            <p>• Enable meditation music for better concentration</p>
+          </div>
+        </div>
       </div>
     </div>
   );
