@@ -1,10 +1,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Upload, SkipForward, SkipBack, X } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAudioFiles } from "@/hooks/useAudioFiles";
 import { useAuth } from "@/hooks/useAuth";
+import PlayerControls from "./music/PlayerControls";
+import VolumeControl from "./music/VolumeControl";
+import PlaylistManager from "./music/PlaylistManager";
+import FileUploader from "./music/FileUploader";
+import TrackInfo from "./music/TrackInfo";
 
 interface MusicPlayerProps {
   isFullscreen?: boolean;
@@ -20,7 +25,6 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { audioFiles, loading, uploadAudioFile, deleteAudioFile } = useAudioFiles();
   const { user } = useAuth();
@@ -60,17 +64,13 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     }
   }, [currentTrackIndex, audioFiles, volume, isMuted]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || !user) return;
+  const handleFileUpload = async (files: FileList) => {
+    if (!user) return;
 
     const audioFile = files[0];
     if (audioFile && audioFile.type.startsWith('audio/')) {
       await uploadAudioFile(audioFile);
     }
-    
-    // Reset input
-    event.target.value = '';
   };
 
   const togglePlay = () => {
@@ -92,8 +92,7 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     }
   };
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
+  const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
     if (audioRef.current && !isMuted) {
       audioRef.current.volume = newVolume;
@@ -110,13 +109,6 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     if (currentTrackIndex > 0) {
       setCurrentTrackIndex(currentTrackIndex - 1);
     }
-  };
-
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const currentTrack = audioFiles[currentTrackIndex];
@@ -139,23 +131,7 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     <div className={`space-y-4 ${isFullscreen ? 'text-white' : ''}`}>
       <audio ref={audioRef} />
       
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="audio/*"
-        onChange={handleFileUpload}
-        className="hidden"
-      />
-
-      {/* Upload Button */}
-      <Button
-        onClick={() => fileInputRef.current?.click()}
-        variant={isFullscreen ? "outline" : "default"}
-        className={`w-full ${isFullscreen ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm' : ''}`}
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        Upload Audio Files
-      </Button>
+      <FileUploader isFullscreen={isFullscreen} onFileUpload={handleFileUpload} />
 
       {loading && (
         <div className={`text-center ${isFullscreen ? 'text-white' : 'text-gray-600'}`}>
@@ -163,106 +139,41 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
         </div>
       )}
 
-      {/* Current Track Info */}
       {currentTrack && (
-        <div className={`text-center space-y-2 ${isFullscreen ? 'text-white' : 'text-gray-800'}`}>
-          <div className="text-sm opacity-80">Now Playing</div>
-          <div className="font-medium">{currentTrack.name}</div>
-          <div className="text-xs opacity-60">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
-        </div>
-      )}
-
-      {/* Player Controls */}
-      <div className="flex items-center justify-center space-x-4">
-        <Button
-          onClick={prevTrack}
-          disabled={currentTrackIndex === 0}
-          variant={isFullscreen ? "outline" : "default"}
-          size="sm"
-          className={isFullscreen ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm' : ''}
-        >
-          <SkipBack className="w-4 h-4" />
-        </Button>
-
-        <Button
-          onClick={togglePlay}
-          disabled={audioFiles.length === 0}
-          variant={isFullscreen ? "outline" : "default"}
-          className={isFullscreen ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm' : ''}
-        >
-          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-        </Button>
-
-        <Button
-          onClick={nextTrack}
-          disabled={currentTrackIndex >= audioFiles.length - 1}
-          variant={isFullscreen ? "outline" : "default"}
-          size="sm"
-          className={isFullscreen ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm' : ''}
-        >
-          <SkipForward className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Volume Control */}
-      <div className="flex items-center space-x-3">
-        <Button
-          onClick={toggleMute}
-          variant="ghost"
-          size="sm"
-          className={isFullscreen ? 'text-white hover:bg-white/20' : ''}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </Button>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={volume}
-          onChange={handleVolumeChange}
-          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        <TrackInfo
+          trackName={currentTrack.name}
+          currentTime={currentTime}
+          duration={duration}
+          isFullscreen={isFullscreen}
         />
-      </div>
-
-      {/* Playlist */}
-      {audioFiles.length > 0 && (
-        <div className="space-y-2">
-          <div className={`text-sm font-medium ${isFullscreen ? 'text-white' : 'text-gray-700'}`}>
-            Your Music Library ({audioFiles.length} tracks)
-          </div>
-          <div className="max-h-40 overflow-y-auto space-y-1">
-            {audioFiles.map((file, index) => (
-              <div
-                key={file.id}
-                className={`flex items-center justify-between p-2 rounded text-sm ${
-                  index === currentTrackIndex
-                    ? isFullscreen 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-sky-50 text-sky-700'
-                    : isFullscreen
-                      ? 'bg-white/10 text-white/80 hover:bg-white/20'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <span className="truncate flex-1 cursor-pointer" onClick={() => setCurrentTrackIndex(index)}>
-                  {file.name}
-                </span>
-                <Button
-                  onClick={() => deleteAudioFile(file.id)}
-                  variant="ghost"
-                  size="sm"
-                  className={`h-6 w-6 p-0 ${isFullscreen ? 'text-white/60 hover:text-white hover:bg-white/20' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
       )}
+
+      <PlayerControls
+        isPlaying={isPlaying}
+        canPlayPrev={currentTrackIndex > 0}
+        canPlayNext={currentTrackIndex < audioFiles.length - 1}
+        hasAudioFiles={audioFiles.length > 0}
+        isFullscreen={isFullscreen}
+        onTogglePlay={togglePlay}
+        onPrevTrack={prevTrack}
+        onNextTrack={nextTrack}
+      />
+
+      <VolumeControl
+        volume={volume}
+        isMuted={isMuted}
+        isFullscreen={isFullscreen}
+        onToggleMute={toggleMute}
+        onVolumeChange={handleVolumeChange}
+      />
+
+      <PlaylistManager
+        audioFiles={audioFiles}
+        currentTrackIndex={currentTrackIndex}
+        isFullscreen={isFullscreen}
+        onTrackSelect={setCurrentTrackIndex}
+        onDeleteTrack={deleteAudioFile}
+      />
     </div>
   );
 
