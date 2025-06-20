@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Play, Pause, RotateCcw, X, Clock } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 
 const FocusMode = () => {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
@@ -13,6 +13,8 @@ const FocusMode = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customMinutes, setCustomMinutes] = useState(25);
   const [showCustomInput, setShowCustomInput] = useState(false);
+
+  const { speak } = useSpeechSynthesis();
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -23,7 +25,7 @@ const FocusMode = () => {
       }, 1000);
     } else if (timeLeft === 0) {
       setIsRunning(false);
-      // Voice notification
+      // Voice notification using Speech Synthesis API
       speakNotification();
       
       // Switch between work and break sessions
@@ -42,30 +44,15 @@ const FocusMode = () => {
   }, [isRunning, timeLeft, sessionType]);
 
   const speakNotification = () => {
-    if ('speechSynthesis' in window) {
-      const message = sessionType === 'work' 
-        ? "Hi Sir, Your Focus Session is over. Ready for the Work. Have a good day!"
-        : "Hi Sir, Your break time is over. Ready to focus again!";
-      
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 0.8;
-      
-      // Try to use a more pleasant voice if available
-      const voices = speechSynthesis.getVoices();
-      const preferredVoice = voices.find(voice => 
-        voice.name.includes('Google') || 
-        voice.name.includes('Microsoft') ||
-        voice.lang.includes('en')
-      );
-      
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-      }
-      
-      speechSynthesis.speak(utterance);
-    }
+    const message = sessionType === 'work' 
+      ? "Hi Sir, Your Focus Session is over. Ready for the Work. Have a good day!"
+      : "Hi Sir, Your break time is over. Ready to focus again!";
+    
+    speak(message, {
+      rate: 0.8,
+      pitch: 1,
+      volume: 0.8
+    });
   };
 
   const formatTime = (seconds: number) => {
@@ -313,9 +300,9 @@ const FocusMode = () => {
             <p>• Repeat the cycle to maximize productivity</p>
             <p>• After 4 cycles, take a longer 15-30 minute break</p>
             <p>• Use fullscreen mode for distraction-free focus</p>
-            <p>• Upload your favorite focus music to stay motivated</p>
+            <p>• Upload your favorite focus music - saved permanently to your account</p>
             <p>• Set custom focus times from 1 to 180 minutes</p>
-            <p>• Get voice notifications when sessions complete</p>
+            <p>• Get voice notifications when sessions complete using Speech Synthesis</p>
           </div>
         </div>
       </div>

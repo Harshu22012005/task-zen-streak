@@ -3,13 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Upload, SkipForward, SkipBack, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface AudioFile {
-  id: string;
-  name: string;
-  url: string;
-  file: File;
-}
+import { useAudioFiles } from "@/hooks/useAudioFiles";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MusicPlayerProps {
   isFullscreen?: boolean;
@@ -21,12 +16,14 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { audioFiles, loading, uploadAudioFile, deleteAudioFile } = useAudioFiles();
+  const { user } = useAuth();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -63,27 +60,17 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     }
   }, [currentTrackIndex, audioFiles, volume, isMuted]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || !user) return;
 
-    const newAudioFiles: AudioFile[] = [];
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith('audio/')) {
-        const audioFile: AudioFile = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name.replace(/\.[^/.]+$/, ""),
-          url: URL.createObjectURL(file),
-          file: file
-        };
-        newAudioFiles.push(audioFile);
-      }
-    });
-
-    setAudioFiles(prev => [...prev, ...newAudioFiles]);
-    if (audioFiles.length === 0 && newAudioFiles.length > 0) {
-      setCurrentTrackIndex(0);
+    const audioFile = files[0];
+    if (audioFile && audioFile.type.startsWith('audio/')) {
+      await uploadAudioFile(audioFile);
     }
+    
+    // Reset input
+    event.target.value = '';
   };
 
   const togglePlay = () => {
@@ -125,18 +112,6 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
     }
   };
 
-  const removeTrack = (id: string) => {
-    const trackIndex = audioFiles.findIndex(file => file.id === id);
-    const newAudioFiles = audioFiles.filter(file => file.id !== id);
-    setAudioFiles(newAudioFiles);
-    
-    if (trackIndex === currentTrackIndex && newAudioFiles.length > 0) {
-      setCurrentTrackIndex(Math.min(currentTrackIndex, newAudioFiles.length - 1));
-    } else if (newAudioFiles.length === 0) {
-      setIsPlaying(false);
-    }
-  };
-
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -146,6 +121,20 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
 
   const currentTrack = audioFiles[currentTrackIndex];
 
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400">
+              Please login to access the music player
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const playerContent = (
     <div className={`space-y-4 ${isFullscreen ? 'text-white' : ''}`}>
       <audio ref={audioRef} />
@@ -154,7 +143,6 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
         ref={fileInputRef}
         type="file"
         accept="audio/*"
-        multiple
         onChange={handleFileUpload}
         className="hidden"
       />
@@ -168,6 +156,12 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
         <Upload className="w-4 h-4 mr-2" />
         Upload Audio Files
       </Button>
+
+      {loading && (
+        <div className={`text-center ${isFullscreen ? 'text-white' : 'text-gray-600'}`}>
+          Loading your music library...
+        </div>
+      )}
 
       {/* Current Track Info */}
       {currentTrack && (
@@ -237,7 +231,7 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
       {audioFiles.length > 0 && (
         <div className="space-y-2">
           <div className={`text-sm font-medium ${isFullscreen ? 'text-white' : 'text-gray-700'}`}>
-            Playlist ({audioFiles.length} tracks)
+            Your Music Library ({audioFiles.length} tracks)
           </div>
           <div className="max-h-40 overflow-y-auto space-y-1">
             {audioFiles.map((file, index) => (
@@ -257,7 +251,7 @@ const MusicPlayer = ({ isFullscreen = false }: MusicPlayerProps) => {
                   {file.name}
                 </span>
                 <Button
-                  onClick={() => removeTrack(file.id)}
+                  onClick={() => deleteAudioFile(file.id)}
                   variant="ghost"
                   size="sm"
                   className={`h-6 w-6 p-0 ${isFullscreen ? 'text-white/60 hover:text-white hover:bg-white/20' : 'text-gray-400 hover:text-gray-600'}`}
