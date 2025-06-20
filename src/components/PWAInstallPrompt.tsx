@@ -77,9 +77,18 @@ const PWAInstallPrompt = () => {
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-none shadow-2xl">
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Smartphone className="w-5 h-5 text-white" />
-              <h3 className="text-white font-semibold text-sm">Install DailyTasker AI</h3>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white rounded-lg p-1 flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/18f36700-5a59-4011-a7e8-06b998ee9830.png" 
+                  alt="DailyTasker AI Logo" 
+                  className="w-8 h-8"
+                />
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-sm">Install DailyTasker AI</h3>
+                <p className="text-white/80 text-xs">Get the native app experience</p>
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -92,7 +101,7 @@ const PWAInstallPrompt = () => {
           </div>
           
           <p className="text-white/90 text-xs mb-3">
-            Add to your home screen for quick access and a native app experience!
+            Add to your home screen for quick access, offline support, and a native app experience!
           </p>
           
           <Button

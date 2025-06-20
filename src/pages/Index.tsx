@@ -5,6 +5,7 @@ import HeroSection from "@/components/HeroSection";
 import AIFeaturesSection from "@/components/AIFeaturesSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -27,6 +28,7 @@ const Index = () => {
       <AIFeaturesSection />
       <CTASection />
       <Footer />
+      <PWAInstallPrompt />
     </div>
   );
 };
