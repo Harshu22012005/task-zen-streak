@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Play, Pause, RotateCcw, X, Clock } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
 
 const FocusMode = () => {
@@ -9,6 +11,8 @@ const FocusMode = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [sessionType, setSessionType] = useState<'work' | 'break'>('work');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [customMinutes, setCustomMinutes] = useState(25);
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -19,6 +23,9 @@ const FocusMode = () => {
       }, 1000);
     } else if (timeLeft === 0) {
       setIsRunning(false);
+      // Voice notification
+      speakNotification();
+      
       // Switch between work and break sessions
       if (sessionType === 'work') {
         setSessionType('break');
@@ -34,6 +41,33 @@ const FocusMode = () => {
     };
   }, [isRunning, timeLeft, sessionType]);
 
+  const speakNotification = () => {
+    if ('speechSynthesis' in window) {
+      const message = sessionType === 'work' 
+        ? "Hi Sir, Your Focus Session is over. Ready for the Work. Have a good day!"
+        : "Hi Sir, Your break time is over. Ready to focus again!";
+      
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      utterance.volume = 0.8;
+      
+      // Try to use a more pleasant voice if available
+      const voices = speechSynthesis.getVoices();
+      const preferredVoice = voices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Microsoft') ||
+        voice.lang.includes('en')
+      );
+      
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -44,12 +78,21 @@ const FocusMode = () => {
   
   const handleReset = () => {
     setIsRunning(false);
-    setTimeLeft(sessionType === 'work' ? 25 * 60 : 5 * 60);
+    setTimeLeft(sessionType === 'work' ? customMinutes * 60 : 5 * 60);
   };
 
   const handleCustomTime = (minutes: number) => {
     setIsRunning(false);
+    setCustomMinutes(minutes);
     setTimeLeft(minutes * 60);
+  };
+
+  const handleCustomTimeSubmit = () => {
+    if (customMinutes > 0 && customMinutes <= 180) { // Max 3 hours
+      setIsRunning(false);
+      setTimeLeft(customMinutes * 60);
+      setShowCustomInput(false);
+    }
   };
 
   const enterFullscreen = () => {
@@ -195,7 +238,7 @@ const FocusMode = () => {
 
           <div className="border-t dark:border-gray-700 pt-6">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Quick Start</h3>
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-3 mb-4">
               <Button
                 onClick={() => handleCustomTime(15)}
                 variant="outline"
@@ -220,7 +263,40 @@ const FocusMode = () => {
               >
                 45 min
               </Button>
+              <Button
+                onClick={() => setShowCustomInput(!showCustomInput)}
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+              >
+                <Clock className="w-4 h-4 mr-1" />
+                Custom
+              </Button>
             </div>
+
+            {showCustomInput && (
+              <div className="flex justify-center items-center gap-3 mb-4">
+                <Label htmlFor="custom-time" className="text-sm font-medium">
+                  Minutes:
+                </Label>
+                <Input
+                  id="custom-time"
+                  type="number"
+                  min="1"
+                  max="180"
+                  value={customMinutes}
+                  onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
+                  className="w-20 text-center"
+                />
+                <Button
+                  onClick={handleCustomTimeSubmit}
+                  size="sm"
+                  className="bg-sky-500 hover:bg-sky-600 text-white"
+                >
+                  Set
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -238,6 +314,8 @@ const FocusMode = () => {
             <p>• After 4 cycles, take a longer 15-30 minute break</p>
             <p>• Use fullscreen mode for distraction-free focus</p>
             <p>• Upload your favorite focus music to stay motivated</p>
+            <p>• Set custom focus times from 1 to 180 minutes</p>
+            <p>• Get voice notifications when sessions complete</p>
           </div>
         </div>
       </div>
