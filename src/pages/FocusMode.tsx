@@ -1,17 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
+import { Play, Pause, RotateCcw, X } from "lucide-react";
+import MusicPlayer from "@/components/MusicPlayer";
 
 const FocusMode = () => {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [sessionType, setSessionType] = useState<'work' | 'break'>('work');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
-  const [oscillator, setOscillator] = useState<OscillatorNode | null>(null);
-  const [gainNode, setGainNode] = useState<GainNode | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -69,62 +66,6 @@ const FocusMode = () => {
     }
   };
 
-  const toggleMusic = () => {
-    if (!isMusicPlaying) {
-      startMeditationMusic();
-    } else {
-      stopMeditationMusic();
-    }
-    setIsMusicPlaying(!isMusicPlaying);
-  };
-
-  const startMeditationMusic = () => {
-    try {
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator1 = context.createOscillator();
-      const oscillator2 = context.createOscillator();
-      const gain = context.createGain();
-
-      // Create ambient meditation sounds
-      oscillator1.frequency.setValueAtTime(110, context.currentTime); // Low frequency
-      oscillator2.frequency.setValueAtTime(220, context.currentTime); // Higher harmonic
-      
-      oscillator1.type = 'sine';
-      oscillator2.type = 'triangle';
-      
-      gain.gain.setValueAtTime(0.1, context.currentTime);
-      
-      oscillator1.connect(gain);
-      oscillator2.connect(gain);
-      gain.connect(context.destination);
-      
-      oscillator1.start();
-      oscillator2.start();
-      
-      setAudioContext(context);
-      setOscillator(oscillator1);
-      setGainNode(gain);
-    } catch (error) {
-      console.log('Audio not supported');
-    }
-  };
-
-  const stopMeditationMusic = () => {
-    if (oscillator && audioContext) {
-      oscillator.stop();
-      audioContext.close();
-      setOscillator(null);
-      setAudioContext(null);
-      setGainNode(null);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      stopMeditationMusic();
-    };
-  }, []);
-
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center text-white z-50">
@@ -137,7 +78,7 @@ const FocusMode = () => {
           <X className="w-6 h-6" />
         </Button>
 
-        <div className="text-center space-y-8">
+        <div className="text-center space-y-8 max-w-4xl mx-auto px-6">
           <div className="space-y-4">
             <div className="text-lg font-medium opacity-80">
               {sessionType === 'work' ? 'Focus Session' : 'Break Time'}
@@ -164,15 +105,6 @@ const FocusMode = () => {
             >
               <RotateCcw className="w-6 h-6 mr-3" />
               Reset
-            </Button>
-
-            <Button
-              onClick={toggleMusic}
-              variant="outline"
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30 px-8 py-4 text-lg backdrop-blur-sm"
-            >
-              {isMusicPlaying ? <VolumeX className="w-6 h-6 mr-3" /> : <Volume2 className="w-6 h-6 mr-3" />}
-              {isMusicPlaying ? 'Stop Music' : 'Play Music'}
             </Button>
           </div>
 
@@ -201,6 +133,11 @@ const FocusMode = () => {
                 45 min
               </Button>
             </div>
+          </div>
+
+          {/* Music Player in Fullscreen */}
+          <div className="mt-8">
+            <MusicPlayer isFullscreen={true} />
           </div>
         </div>
       </div>
@@ -287,6 +224,11 @@ const FocusMode = () => {
           </div>
         </div>
 
+        {/* Music Player in Regular Mode */}
+        <div className="mt-6">
+          <MusicPlayer />
+        </div>
+
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">How it works</h3>
           <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -295,7 +237,7 @@ const FocusMode = () => {
             <p>• Repeat the cycle to maximize productivity</p>
             <p>• After 4 cycles, take a longer 15-30 minute break</p>
             <p>• Use fullscreen mode for distraction-free focus</p>
-            <p>• Enable meditation music for better concentration</p>
+            <p>• Upload your favorite focus music to stay motivated</p>
           </div>
         </div>
       </div>
